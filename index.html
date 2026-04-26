@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Вопросы с собеседований</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.11/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f8fafc;
+    color: #0f172a;
+    line-height: 1.5;
+    font-size: 15px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  @media (min-width: 640px) { .container { padding: 24px; } }
+
+  header { margin-bottom: 24px; }
+  h1 { font-size: 28px; font-weight: 700; margin: 0 0 4px; }
+  header p { color: #64748b; margin: 0; }
+
+  .controls {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .controls-row { display: grid; gap: 14px; grid-template-columns: 1fr; }
+  @media (min-width: 720px) { .controls-row { grid-template-columns: 1fr 1fr 1fr; } }
+
+  .label-text { display: block; font-size: 11px; font-weight: 600; color: #64748b;
+                text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  input[type=text], select {
+    width: 100%; padding: 8px 12px; font-size: 14px;
+    border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;
+    font-family: inherit;
+  }
+  input[type=text]:focus, select:focus {
+    outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+  }
+  input[type=range] { width: 100%; }
+
+  .filter-section { margin-top: 14px; }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+  .tag {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 500; line-height: 1.5;
+  }
+  .t-Frontend  { background: #dbeafe; color: #1e40af; }
+  .t-Backend   { background: #dcfce7; color: #166534; }
+  .t-QA        { background: #fef3c7; color: #92400e; }
+  .t-DevOps    { background: #fce7f3; color: #9f1239; }
+  .t-Fullstack { background: #e0e7ff; color: #3730a3; }
+  .t-Общее     { background: #e5e7eb; color: #374151; }
+
+  button.tag-btn {
+    background: none; border: none; padding: 0; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+    border-radius: 999px; transition: opacity 0.15s, box-shadow 0.15s;
+    opacity: 0.65;
+  }
+  button.tag-btn:hover { opacity: 1; }
+  button.tag-btn.active { opacity: 1; box-shadow: 0 0 0 2px #3b82f6; }
+  .count-pill { font-size: 11px; color: #64748b; }
+
+  .tech-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 6px;
+    font-size: 11px; font-weight: 500;
+    background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;
+  }
+  button.tech-tag {
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+    font-family: inherit;
+  }
+  button.tech-tag:hover { background: #e2e8f0; }
+  button.tech-tag.active { background: #1e293b; color: #fff; border-color: #1e293b; }
+  button.tech-tag .opacity-60 { opacity: 0.65; margin-left: 3px; }
+
+  .reset-btn {
+    background: none; border: none; cursor: pointer;
+    color: #64748b; font-size: 11px; text-decoration: underline;
+    padding: 2px 4px; font-family: inherit;
+  }
+  .reset-btn:hover { color: #0f172a; }
+
+  .toggle-all-btn {
+    background: none; border: none; cursor: pointer;
+    color: #2563eb; font-size: 11px; text-decoration: underline;
+    padding: 0 0 0 6px; font-family: inherit;
+  }
+
+  .summary { font-size: 13px; color: #64748b; margin-top: 12px; }
+  .summary strong { color: #0f172a; }
+
+  .question-list { display: flex; flex-direction: column; gap: 10px; }
+
+  details.question {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+    overflow: hidden; transition: border-color 0.15s;
+  }
+  details.question[open] { border-color: #cbd5e1; }
+  details.question summary {
+    list-style: none; cursor: pointer;
+    padding: 14px 16px;
+    display: flex; gap: 10px;
+    transition: background 0.15s;
+  }
+  details.question summary::-webkit-details-marker { display: none; }
+  details.question summary:hover { background: #f8fafc; }
+  details.question .arrow {
+    color: #94a3b8; font-size: 18px; flex-shrink: 0; line-height: 1;
+    transition: transform 0.2s; margin-top: 2px;
+  }
+  details.question[open] .arrow { transform: rotate(90deg); }
+  details.question .body { flex: 1; min-width: 0; }
+  details.question .topic { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  details.question .canonical { font-size: 13px; color: #475569; margin-bottom: 8px; }
+  details.question .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  details.question .freq {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 13px; font-weight: 600; color: #ea580c;
+  }
+
+  .article { padding: 8px 24px 24px 50px; border-top: 1px solid #f1f5f9; font-size: 14.5px; }
+  .article h2, .article h3, .article h4, .article h5 { font-weight: 600; margin: 1em 0 0.3em; }
+  .article h4 { font-size: 1.05em; color: #1f2937; }
+  .article h5 { font-size: 0.95em; color: #374151; }
+  .article p { margin: 0.5em 0; }
+  .article ul, .article ol { margin: 0.5em 0; padding-left: 1.5em; }
+  .article ul { list-style: disc; }
+  .article ol { list-style: decimal; }
+  .article code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+  .article pre { background: #1e293b; color: #e2e8f0; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85em; }
+  .article pre code { background: transparent; padding: 0; color: inherit; }
+  .article strong { font-weight: 600; }
+  .article em { color: #94a3b8; }
+
+  .empty { text-align: center; padding: 48px 0; color: #94a3b8; }
+  footer { margin-top: 32px; text-align: center; font-size: 11px; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div class="container" x-data="app()" x-init="init()">
+
+  <header>
+    <h1>📚 Вопросы с собеседований</h1>
+    <p x-text="subtitle"></p>
+  </header>
+
+  <div class="controls">
+    <div class="controls-row">
+      <div>
+        <label class="label-text">Поиск</label>
+        <input type="text" x-model="search" placeholder="По теме или вопросу...">
+      </div>
+      <div>
+        <label class="label-text">Сортировка</label>
+        <select x-model="sortBy">
+          <option value="freq">По частоте ↓</option>
+          <option value="freq_asc">По частоте ↑</option>
+          <option value="topic">По теме (А→Я)</option>
+          <option value="tag">По тегу</option>
+        </select>
+      </div>
+      <div>
+        <label class="label-text">Минимум повторов: <span x-text="minFreq"></span></label>
+        <input type="range" min="1" :max="maxFreq" x-model.number="minFreq">
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <label class="label-text">Направление</label>
+      <div class="filter-row">
+        <template x-for="tag in allTags" :key="tag">
+          <button class="tag-btn" :class="{ active: activeTags.includes(tag) }" @click="toggleTag(tag)">
+            <span class="tag" :class="`t-${tag.replace(/[^A-Za-zА-Яа-я]/g,'')}`" x-text="tag"></span>
+            <span class="count-pill" x-text="`(${tagCounts[tag]||0})`"></span>
+          </button>
+        </template>
+        <button class="reset-btn" x-show="activeTags.length" @click="activeTags=[]">сброс</button>
+      </div>
+    </div>
+
+    <div class="filter-section" x-show="allTechTags.length">
+      <label class="label-text">
+        Технологии
+        <button class="toggle-all-btn" @click="showAllTech = !showAllTech"
+                x-text="showAllTech ? 'свернуть' : `показать все (${allTechTags.length})`"></button>
+      </label>
+      <div class="filter-row">
+        <template x-for="tag in visibleTechTags" :key="tag">
+          <button class="tech-tag" :class="{ active: activeTechTags.includes(tag) }"
+                  @click="toggleTechTag(tag)">
+            <span x-text="tag"></span>
+            <span class="opacity-60" x-text="`(${techTagCounts[tag]||0})`"></span>
+          </button>
+        </template>
+        <button class="reset-btn" x-show="activeTechTags.length" @click="activeTechTags=[]">сброс</button>
+      </div>
+    </div>
+
+    <div class="summary">
+      Показано: <strong x-text="filtered.length"></strong> из <span x-text="questions.length"></span>
+    </div>
+  </div>
+
+  <div class="question-list">
+    <template x-for="q in filtered" :key="q.canonical_question">
+      <details class="question">
+        <summary>
+          <span class="arrow">▸</span>
+          <div class="body">
+            <div class="topic" x-text="q.topic"></div>
+            <div class="canonical" x-text="q.canonical_question"></div>
+            <div class="meta">
+              <span class="freq"><span>🔥</span><span x-text="q.occurrence_count + 'x'"></span></span>
+              <template x-for="tag in q.tags" :key="tag">
+                <span class="tag" :class="`t-${tag.replace(/[^A-Za-zА-Яа-я]/g,'')}`" x-text="tag"></span>
+              </template>
+              <template x-for="tag in (q.tech_tags || [])" :key="tag">
+                <span class="tech-tag" x-text="tag"></span>
+              </template>
+            </div>
+          </div>
+        </summary>
+        <div class="article" x-html="renderMarkdown(q.article)"></div>
+      </details>
+    </template>
+    <div class="empty" x-show="filtered.length === 0">
+      Ничего не найдено. Ослабьте фильтры.
+    </div>
+  </div>
+
+  <footer>
+    Обновлено: <span x-text="data.generated_at"></span> ·
+    <span x-text="data.total_interviews"></span> интервью ·
+    <span x-text="data.total_questions"></span> вопросов
+  </footer>
+</div>
+
+<script>
+function app() {
+  return {
+    data: {},
+    questions: [],
+    search: '',
+    sortBy: 'freq',
+    activeTags: [],
+    activeTechTags: [],
+    minFreq: 1,
+    tagCounts: {},
+    techTagCounts: {},
+    showAllTech: false,
+
+    async init() {
+      const resp = await fetch('questions.json');
+      this.data = await resp.json();
+      this.questions = this.data.questions;
+
+      this.tagCounts = {};
+      this.techTagCounts = {};
+      this.questions.forEach(q => {
+        (q.tags || []).forEach(t => { this.tagCounts[t] = (this.tagCounts[t] || 0) + 1; });
+        (q.tech_tags || []).forEach(t => { this.techTagCounts[t] = (this.techTagCounts[t] || 0) + 1; });
+      });
+    },
+
+    get allTechTags() {
+      return Object.keys(this.techTagCounts).sort((a,b) => this.techTagCounts[b] - this.techTagCounts[a]);
+    },
+
+    get visibleTechTags() {
+      return this.showAllTech ? this.allTechTags : this.allTechTags.slice(0, 20);
+    },
+
+    toggleTechTag(tag) {
+      if (this.activeTechTags.includes(tag)) {
+        this.activeTechTags = this.activeTechTags.filter(t => t !== tag);
+      } else {
+        this.activeTechTags.push(tag);
+      }
+    },
+
+    get subtitle() {
+      if (!this.data.total_interviews) return 'Загрузка...';
+      return `Автоматически собрано из ${this.data.total_interviews} интервью. Всего уникальных тем: ${this.questions.length}.`;
+    },
+
+    get allTags() {
+      const order = ['Frontend','Backend','QA','DevOps','Fullstack','Общее'];
+      const known = new Set(Object.keys(this.tagCounts));
+      return [...order.filter(t => known.has(t)), ...[...known].filter(t => !order.includes(t))];
+    },
+
+    get maxFreq() {
+      return Math.max(1, ...this.questions.map(q => q.occurrence_count));
+    },
+
+    toggleTag(tag) {
+      if (this.activeTags.includes(tag)) {
+        this.activeTags = this.activeTags.filter(t => t !== tag);
+      } else {
+        this.activeTags.push(tag);
+      }
+    },
+
+    get filtered() {
+      const s = this.search.trim().toLowerCase();
+      let list = this.questions.filter(q => {
+        if (q.occurrence_count < this.minFreq) return false;
+        if (this.activeTags.length) {
+          const intersects = (q.tags || []).some(t => this.activeTags.includes(t));
+          if (!intersects) return false;
+        }
+        if (this.activeTechTags.length) {
+          const intersects = (q.tech_tags || []).some(t => this.activeTechTags.includes(t));
+          if (!intersects) return false;
+        }
+        if (s) {
+          const tagHay = [...(q.tags || []), ...(q.tech_tags || [])].join(' ').toLowerCase();
+          const hay = `${q.topic} ${q.canonical_question} ${tagHay}`.toLowerCase();
+          if (!hay.includes(s)) return false;
+        }
+        return true;
+      });
+
+      const cmp = {
+        freq:     (a,b) => b.occurrence_count - a.occurrence_count || a.topic.localeCompare(b.topic, 'ru'),
+        freq_asc: (a,b) => a.occurrence_count - b.occurrence_count || a.topic.localeCompare(b.topic, 'ru'),
+        topic:    (a,b) => a.topic.localeCompare(b.topic, 'ru'),
+        tag:      (a,b) => (a.tags?.[0] || '').localeCompare(b.tags?.[0] || '', 'ru') || b.occurrence_count - a.occurrence_count,
+      }[this.sortBy];
+      list.sort(cmp);
+      return list;
+    },
+
+    renderMarkdown(md) {
+      if (!md) return '<em class="text-slate-400">Статья ещё не сгенерирована.</em>';
+      marked.setOptions({ breaks: true, gfm: true });
+      return marked.parse(md);
+    },
+  };
+}
+</script>
+</body>
+</html>
